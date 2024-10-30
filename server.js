@@ -12,24 +12,31 @@ const io = new Server(server, {
   }
 });
 
-// Configurar Express para servir el frontend Angular
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Ruta para manejar todas las solicitudes y devolver el archivo `index.html`
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Escuchar conexiones de clientes
+let userCount = 0;
+
 io.on('connection', (socket) => {
-  console.log('Usuario conectado');
+  userCount++;
+  const username = `Usuario ${userCount}`;
+  
+  console.log(`${username} conectado`);
+
+  // Notificar a todos los usuarios cuando un nuevo usuario se conecta
+  //socket.broadcast.emit('message', { user: 'Sistema', text: `${username} se ha unido al chat.` });
 
   socket.on('message', (msg) => {
-    io.emit('message', msg);
+    // Emitir el mensaje con el nombre del usuario a todos los clientes
+    io.emit('message', { user: username, text: msg });
   });
 
   socket.on('disconnect', () => {
-    console.log('Usuario desconectado');
+    console.log(`${username} desconectado`);
+    socket.broadcast.emit('message', { user: 'Sistema', text: `${username} ha salido del chat.` });
   });
 });
 
